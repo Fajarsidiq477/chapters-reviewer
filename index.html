@@ -38,6 +38,38 @@
       </form>
     </section>
 
+    <section id="screen-apikey" class="card" hidden>
+      <h1>AI-Assisted Grading</h1>
+      <p class="subtitle">Your teacher has turned on AI grading for the written questions in this packet. You'll need your own free Gemini API key to continue.</p>
+
+      <div class="success-box" style="margin-bottom:16px;">
+        This key is used only in the background to grade your own written answers when you submit. It is never saved to this browser and your teacher never sees it.
+      </div>
+
+      <div style="font-size:0.9rem;">
+        <strong>How to get a free key (about 1 minute):</strong>
+        <ol style="padding-left:20px; margin:10px 0;">
+          <li>Go to <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (opens in a new tab).</li>
+          <li>Sign in with your Google account.</li>
+          <li>Click <strong>"Create API key"</strong>.</li>
+          <li>If asked, choose <strong>"Create API key in new project"</strong>.</li>
+          <li>Copy the key it generates.</li>
+          <li>Paste it into the box below and click Continue.</li>
+        </ol>
+      </div>
+
+      <form id="apikey-form">
+        <label for="input-gemini-key">Gemini API Key</label>
+        <input type="password" id="input-gemini-key" autocomplete="off" placeholder="Paste your key here" required>
+
+        <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="submit" class="btn-primary" id="btn-apikey-continue">Continue to the Quiz</button>
+          <button type="button" class="btn-secondary" id="btn-apikey-back">Back</button>
+        </div>
+        <div id="apikey-error" class="error-box" hidden></div>
+      </form>
+    </section>
+
     <section id="screen-result" class="card" hidden>
       <h2 id="result-title">Submitted!</h2>
       <div id="result-body"></div>

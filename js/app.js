@@ -3,6 +3,7 @@
 
   var screens = {
     login: document.getElementById('screen-login'),
+    apikey: document.getElementById('screen-apikey'),
     quiz: document.getElementById('screen-quiz'),
     result: document.getElementById('screen-result')
   };
@@ -10,6 +11,11 @@
   var loginForm = document.getElementById('login-form');
   var loginError = document.getElementById('login-error');
   var btnStart = document.getElementById('btn-start');
+
+  var apikeyForm = document.getElementById('apikey-form');
+  var apikeyError = document.getElementById('apikey-error');
+  var btnApikeyContinue = document.getElementById('btn-apikey-continue');
+  var btnApikeyBack = document.getElementById('btn-apikey-back');
 
   var quizTitleEl = document.getElementById('quiz-title');
   var quizTimerEl = document.getElementById('quiz-timer');
@@ -48,7 +54,9 @@
     timerHandle: null,
     submitting: false,
     sidebarButtons: {},
-    questionNumbers: {}
+    questionNumbers: {},
+    geminiApiKey: '',
+    pendingValidateData: null
   };
 
   function showScreen(name) {
@@ -207,6 +215,14 @@
         state.packetCode = data.packetCode;
         state.packetMeta = data;
 
+        if (data.gradingMode === 'ai') {
+          state.pendingValidateData = data;
+          apikeyError.hidden = true;
+          document.getElementById('input-gemini-key').value = '';
+          showScreen('apikey');
+          return;
+        }
+
         return fetchJson('packets/' + data.jsonFile).then(function (packet) {
           beginQuiz(packet, data);
         });
@@ -217,6 +233,39 @@
       .finally(function () {
         btnStart.disabled = false;
         btnStart.textContent = 'Start Review';
+      });
+  });
+
+  btnApikeyBack.addEventListener('click', function () {
+    showScreen('login');
+  });
+
+  apikeyForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var key = document.getElementById('input-gemini-key').value.trim();
+    if (!key) {
+      apikeyError.hidden = false;
+      apikeyError.textContent = 'Please paste your API key to continue.';
+      return;
+    }
+    apikeyError.hidden = true;
+    state.geminiApiKey = key;
+
+    var data = state.pendingValidateData;
+    btnApikeyContinue.disabled = true;
+    btnApikeyContinue.textContent = 'Loading...';
+
+    fetchJson('packets/' + data.jsonFile)
+      .then(function (packet) {
+        beginQuiz(packet, data);
+      })
+      .catch(function () {
+        apikeyError.hidden = false;
+        apikeyError.textContent = 'Could not reach the server. Check your internet connection and try again.';
+      })
+      .finally(function () {
+        btnApikeyContinue.disabled = false;
+        btnApikeyContinue.textContent = 'Continue to the Quiz';
       });
   });
 
@@ -464,7 +513,7 @@
     collectSectionAnswers();
 
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Submitting...';
+    btnSubmit.textContent = state.packetMeta.gradingMode === 'ai' ? 'Grading with AI (this can take a minute)...' : 'Submitting...';
 
     var timeTakenSeconds = Math.round((Date.now() - state.startTimestamp) / 1000);
 
@@ -474,7 +523,8 @@
       class: state.className,
       packetCode: state.packetCode,
       answers: state.answers,
-      timeTakenSeconds: timeTakenSeconds
+      timeTakenSeconds: timeTakenSeconds,
+      geminiApiKey: state.geminiApiKey
     }).then(function (data) {
       if (!data.success) {
         if (data.error === 'already_submitted') {
@@ -510,6 +560,12 @@
     if (data.essaySectionStatus === 'Auto-Estimated') {
       html += '<p class="score-line">Structured questions (auto-estimated): <strong>' + data.essayScore + ' / ' + data.essayMax + '</strong></p>';
       html += '<div class="success-box">This structured-question score is an automatic estimate. Your teacher may review and adjust it.</div>';
+    } else if (data.essaySectionStatus === 'AI-Graded') {
+      html += '<p class="score-line">Structured questions (AI-graded): <strong>' + data.essayScore + ' / ' + data.essayMax + '</strong></p>';
+      html += '<div class="success-box">This structured-question score was graded by AI. Your teacher may review and adjust it.</div>';
+    } else if (data.essaySectionStatus === 'AI-Graded (partial - some pending review)') {
+      html += '<p class="score-line">Structured questions (partially AI-graded): <strong>' + data.essayScore + ' / ' + data.essayMax + '</strong></p>';
+      html += '<div class="success-box">Some structured answers were graded by AI; a few could not be graded automatically and were sent to your teacher for manual review.</div>';
     } else if (data.essaySectionStatus === 'Pending Review') {
       html += '<div class="success-box">Your structured-question answers (' + data.essayMax + ' marks available) have been sent to your teacher for manual grading.</div>';
     }

@@ -30,7 +30,7 @@ Your `Config` row for chapter 4 looks like this:
 
 - **Active**: `TRUE`/`FALSE` — turn a packet on or off for students at any time, just by editing this cell.
 - **TimeLimitMinutes**: how long a student gets once they start.
-- **GradingMode**: `manual` (default — Section 5 written answers go to `EssayResponses` for you to grade by typing a score) or `auto` (a rough keyword-match estimate is scored automatically). You can change this per packet, any time.
+- **GradingMode**: `manual` (default — Section 5 written answers go to `EssayResponses` for you to grade by typing a score), `auto` (a rough keyword-match estimate is scored automatically), or `ai` (each student's own free Gemini API key grades their answers — see "AI-assisted grading" below). You can change this per packet, any time.
 - **QuestionLimit**: leave blank/`0` to give every student all 100 questions (default). Set a number (e.g. `20`) to give each student a shorter, randomly-sampled subset instead — see "Limiting questions per session" below.
 
 ---
@@ -94,6 +94,26 @@ Each assignment is recorded in the new `ActiveSessions` tab (`FullName | Class |
 
 ---
 
+## AI-assisted grading
+
+Set a packet's `GradingMode` to `ai` and its Section 5 (structured/essay) answers get graded by Google's Gemini model — using **each student's own free API key**, never yours. No API billing or key setup on your end at all.
+
+How it works:
+
+1. When a student's packet code validates and that packet's `GradingMode` is `ai`, the site shows them a screen with step-by-step instructions to create a free key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (sign in with any Google account, click "Create API key", copy it, paste it in). This happens once per attempt — the key is **not** saved to their browser or sent anywhere except in their own submit request.
+2. When they submit, their key travels once to your Apps Script, which calls Gemini itself (server-side, via `UrlFetchApp`) to grade each essay answer against the model answer already in `AnswerKeys` — the model answer still never reaches the student's browser, same as `manual`/`auto` mode.
+3. Each essay row in `EssayResponses` gets a `GradingSource` (`AI`, `Keyword`, or `Manual`) and a short `Feedback` sentence explaining the score, so you can see at a glance what the AI did and override any `ScoreAwarded` you disagree with.
+4. If a student's key is invalid, hits a quota limit, or they skip entering one, that question just falls back to `Pending Review` for you to grade manually — nothing is ever left ungraded silently. The result screen tells the student honestly whether they got a full AI score, a partial one, or a pending-review notice.
+
+**If you deployed before this feature existed:** your `EssayResponses` tab still has the old `AutoEstimated` (TRUE/FALSE) header in column J. Rename it to `GradingSource` and add a `Feedback` header in column K — `setupSheets` won't rewrite an existing header row for you.
+
+**Limitations specific to this mode:**
+- Grading a packet with many essay questions makes one Gemini call per question, so submission can take a while (tens of seconds) for a long packet — consider pairing `ai` mode with `QuestionLimit` to cap how many essay questions each student gets.
+- Free-tier Gemini keys have a per-minute rate limit; if a student's key gets rate-limited partway through, the remaining essays just fall back to "Pending Review" rather than failing the whole submission.
+- The exact model used is set once in `Code.gs` (`GEMINI_MODEL`, currently `gemini-2.0-flash`) — update that constant if Google renames or retires it.
+
+---
+
 ## How grading works
 
 - **Sections 1-2 (multiple choice, true/false)**: exact match, graded instantly on submit.
@@ -101,6 +121,7 @@ Each assignment is recorded in the new `ActiveSessions` tab (`FullName | Class |
 - **Section 5 (structured/essay)**: depends on that packet's `GradingMode`:
   - `manual` — answers go to `EssayResponses`, status shows "Pending Review" to the student, and you type in scores whenever you like.
   - `auto` — a rough keyword-overlap estimate is calculated instantly; flagged to the student as an estimate, and you can still overwrite `ScoreAwarded` in `EssayResponses` later.
+  - `ai` — graded by Gemini using the student's own key; see "AI-assisted grading" above.
 
 ## Known limitations
 
