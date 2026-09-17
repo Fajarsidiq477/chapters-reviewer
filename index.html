@@ -38,20 +38,39 @@
       </form>
     </section>
 
-    <section id="screen-quiz" class="card" hidden>
-      <div class="quiz-header">
-        <h2 id="quiz-title">Packet</h2>
-        <div class="timer" id="quiz-timer">--:--</div>
-      </div>
-      <div class="progress-text" id="quiz-progress"></div>
-      <div id="quiz-section-title" style="font-weight:700; margin-bottom:10px;"></div>
-      <div id="quiz-questions"></div>
+    <section id="screen-quiz" hidden>
+      <div class="quiz-layout">
+        <aside id="quiz-sidebar" class="sidebar-panel">
+          <div class="sidebar-head">
+            <span>Question Overview</span>
+            <button type="button" class="sidebar-toggle" id="btn-toggle-sidebar" aria-label="Collapse question overview">&#9650;</button>
+          </div>
+          <div class="sidebar-summary" id="sidebar-summary"></div>
+          <div class="sidebar-body" id="sidebar-body">
+            <div class="sidebar-grid" id="sidebar-grid"></div>
+            <div class="sidebar-legend">
+              <span><i class="dot answered"></i> Answered</span>
+              <span><i class="dot"></i> Not answered</span>
+            </div>
+          </div>
+        </aside>
 
-      <div class="quiz-nav">
-        <button type="button" class="btn-secondary" id="btn-prev">Previous</button>
-        <div class="right-group">
-          <button type="button" class="btn-secondary" id="btn-next">Next</button>
-          <button type="button" class="btn-primary" id="btn-submit">Submit Quiz</button>
+        <div class="quiz-main card">
+          <div class="quiz-header">
+            <h2 id="quiz-title">Packet</h2>
+            <div class="timer" id="quiz-timer">--:--</div>
+          </div>
+          <div class="progress-text" id="quiz-progress"></div>
+          <div id="quiz-section-title" style="font-weight:700; margin-bottom:10px;"></div>
+          <div id="quiz-questions"></div>
+
+          <div class="quiz-nav">
+            <button type="button" class="btn-secondary" id="btn-prev">Previous</button>
+            <div class="right-group">
+              <button type="button" class="btn-secondary" id="btn-next">Next</button>
+              <button type="button" class="btn-primary" id="btn-submit">Submit Quiz</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>

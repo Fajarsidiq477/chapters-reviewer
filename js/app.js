@@ -29,6 +29,11 @@
   var btnResume = document.getElementById('btn-resume');
   var btnStartFresh = document.getElementById('btn-start-fresh');
 
+  var sidebarPanel = document.getElementById('quiz-sidebar');
+  var sidebarGrid = document.getElementById('sidebar-grid');
+  var sidebarSummary = document.getElementById('sidebar-summary');
+  var btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+
   var SESSION_POINTER_KEY = 'quiz_active_session';
 
   var state = {
@@ -41,7 +46,9 @@
     startTimestamp: 0,
     endTimestamp: 0,
     timerHandle: null,
-    submitting: false
+    submitting: false,
+    sidebarButtons: {},
+    questionNumbers: {}
   };
 
   function showScreen(name) {
@@ -232,9 +239,74 @@
 
     quizTitleEl.textContent = packet.title || meta.title;
     showScreen('quiz');
+    buildSidebar();
     renderSection();
     startTimer();
   }
+
+  function buildSidebar() {
+    sidebarGrid.innerHTML = '';
+    state.sidebarButtons = {};
+    state.questionNumbers = {};
+
+    var overallNumber = 0;
+    state.packet.sections.forEach(function (section, sectionIdx) {
+      var label = document.createElement('div');
+      label.className = 'sidebar-section-label';
+      label.textContent = section.title.replace(/^Section \d+:\s*/, '');
+      sidebarGrid.appendChild(label);
+
+      section.questions.forEach(function (q) {
+        overallNumber++;
+        state.questionNumbers[q.id] = overallNumber;
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'sidebar-btn';
+        btn.textContent = overallNumber;
+        btn.title = 'Question ' + overallNumber;
+        btn.addEventListener('click', function () {
+          jumpToQuestion(q.id, sectionIdx);
+        });
+        sidebarGrid.appendChild(btn);
+        state.sidebarButtons[q.id] = { el: btn, sectionIdx: sectionIdx };
+      });
+    });
+
+    sidebarPanel.classList.toggle('collapsed', window.innerWidth < 760);
+    updateSidebar();
+  }
+
+  function updateSidebar() {
+    var answered = 0, total = 0;
+    Object.keys(state.sidebarButtons).forEach(function (qid) {
+      total++;
+      var entry = state.sidebarButtons[qid];
+      var isAnswered = !!(state.answers[qid] && state.answers[qid].toString().trim() !== '');
+      if (isAnswered) answered++;
+      entry.el.classList.toggle('answered', isAnswered);
+      entry.el.classList.toggle('current', entry.sectionIdx === state.sectionIndex);
+    });
+    sidebarSummary.textContent = answered + ' / ' + total + ' answered';
+  }
+
+  function jumpToQuestion(questionId, sectionIdx) {
+    collectSectionAnswers();
+    if (state.sectionIndex !== sectionIdx) {
+      state.sectionIndex = sectionIdx;
+      renderSection();
+    }
+    var row = document.getElementById('qrow-' + questionId);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.add('jump-target');
+      setTimeout(function () { row.classList.remove('jump-target'); }, 1400);
+    }
+  }
+
+  btnToggleSidebar.addEventListener('click', function () {
+    sidebarPanel.classList.toggle('collapsed');
+  });
 
   function startTimer() {
     stopTimer();
@@ -280,6 +352,7 @@
       }
     });
     saveDraft();
+    updateSidebar();
   }
 
   function renderSection() {
@@ -290,10 +363,10 @@
     quizSectionTitleEl.textContent = section.title;
 
     var html = '';
-    section.questions.forEach(function (q, idx) {
-      var qNumber = idx + 1;
-      html += '<div class="question">';
-      html += '<div class="question-text">' + escapeHtml(q.text) +
+    section.questions.forEach(function (q) {
+      var overallNumber = state.questionNumbers[q.id];
+      html += '<div class="question" id="qrow-' + q.id + '">';
+      html += '<div class="question-text">' + overallNumber + '. ' + escapeHtml(q.text) +
         (q.marks ? ' <span class="marks-hint">[' + q.marks + (q.marks === 1 ? ' mark' : ' marks') + ']</span>' : '') +
         '</div>';
 
@@ -327,6 +400,8 @@
 
     btnPrev.disabled = state.sectionIndex === 0;
     btnNext.hidden = state.sectionIndex === totalSections - 1;
+
+    updateSidebar();
   }
 
   function escapeHtml(str) {
