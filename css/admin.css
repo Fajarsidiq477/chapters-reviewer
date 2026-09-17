@@ -1,0 +1,170 @@
+.admin-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.dash-toolbar { margin-bottom: 16px; }
+
+.dash-toolbar-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.dash-field { min-width: 160px; }
+.dash-field-grow { flex: 1 1 220px; }
+.dash-field label { margin: 0 0 6px; }
+
+.dash-toolbar-actions { display: flex; gap: 10px; margin-left: auto; }
+
+select#filter-packet {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.dash-summary {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.table-card { padding: 0; overflow: hidden; }
+.table-scroll { overflow-x: auto; }
+
+#results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+#results-table th {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--border);
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#results-table th:hover { color: var(--text); }
+
+#results-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+tr.result-row.expandable { cursor: pointer; }
+tr.result-row.expandable:hover { background: rgba(127, 127, 127, 0.06); }
+
+.expand-arrow {
+  display: inline-block;
+  width: 14px;
+  transition: transform 0.15s ease;
+  color: var(--muted);
+}
+tr.result-row.expanded .expand-arrow { transform: rotate(90deg); }
+
+tr.essay-detail-row td {
+  white-space: normal;
+  background: rgba(127, 127, 127, 0.04);
+  padding: 16px 14px 20px;
+}
+
+.essay-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  background: var(--card-bg);
+}
+.essay-item:last-child { margin-bottom: 0; }
+
+.essay-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.essay-block { margin-bottom: 6px; font-size: 0.88rem; }
+.essay-block .label { color: var(--muted); font-weight: 600; margin-right: 4px; }
+
+.essay-grade-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.essay-grade-row input[type="number"] {
+  width: 80px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.btn-save {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-save:hover { background: var(--accent-dark); }
+
+.save-flash { font-size: 0.82rem; }
+.save-flash.ok { color: var(--success); }
+.save-flash.err { color: var(--danger); }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.badge-manual { background: #eef1f5; color: #5b6472; }
+.badge-keyword { background: #e0ecff; color: #2f6fed; }
+.badge-ai { background: #ede0ff; color: #7b3fe4; }
+.badge-partial { background: #fff1d6; color: #b5760a; }
+.badge-na { background: transparent; color: var(--muted); }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    select#filter-packet { background: #1c222c; }
+  }
+  tr.result-row.expandable:hover { background: rgba(255, 255, 255, 0.05); }
+  tr.essay-detail-row td { background: rgba(255, 255, 255, 0.03); }
+  .badge-manual { background: #2a313d; color: #97a2b0; }
+  .badge-keyword { background: #1c2c4a; color: #7ba0f5; }
+  .badge-ai { background: #2c1f45; color: #b98cf0; }
+  .badge-partial { background: #3a2f16; color: #e0ac4a; }
+}
+
+:root[data-theme="dark"] select#filter-packet { background: #1c222c; }
+
+@media (max-width: 760px) {
+  .dash-toolbar-actions { margin-left: 0; width: 100%; }
+  .dash-toolbar-row { flex-direction: column; align-items: stretch; }
+}

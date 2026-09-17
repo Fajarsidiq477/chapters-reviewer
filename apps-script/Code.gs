@@ -23,6 +23,11 @@
  * The model answer stays server-side as before - only the grading call leaves the
  * server, using UrlFetchApp, not the browser, so the answer key is never exposed
  * to the client. See gradeEssayWithGemini() and GEMINI_MODEL below.
+ *
+ * Admin dashboard (admin.html on the site): reads results via the 'adminResults'
+ * action and can overwrite one essay score via 'adminUpdateEssayScore', both
+ * gated by an ADMIN_PASSWORD you set yourself in Project Settings > Script
+ * Properties (never put the password in this file). See checkAdminPassword().
  */
 
 var GEMINI_MODEL = 'gemini-3.6-flash'; // update if Google renames/retires this free-tier model
@@ -53,7 +58,24 @@ function doPost(e) {
   if (body.action === 'submit') {
     return jsonOutput(submitQuiz(body));
   }
+  if (body.action === 'adminResults') {
+    return jsonOutput(adminGetResults(body));
+  }
+  if (body.action === 'adminUpdateEssayScore') {
+    return jsonOutput(adminUpdateEssayScore(body));
+  }
   return jsonOutput({ success: false, error: 'unknown_action' });
+}
+
+/**
+ * Checks a submitted password against the ADMIN_PASSWORD script property.
+ * Set this once via the Apps Script editor: Project Settings (gear icon) >
+ * Script Properties > Add property. Never commit the password into Code.gs.
+ */
+function checkAdminPassword(password) {
+  var stored = PropertiesService.getScriptProperties().getProperty('ADMIN_PASSWORD');
+  if (!stored) return false;
+  return norm(password) === stored;
 }
 
 function jsonOutput(obj) {
@@ -460,6 +482,101 @@ function submitQuiz(body) {
       essayScore: hasEssay && (config.gradingMode === 'auto' || aiGradedCount > 0) ? essayScoreTotal : null,
       essayMax: essayMax
     };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Returns every Results row (optionally filtered to one packet), each with its essay Q&A attached, for the admin dashboard. */
+function adminGetResults(body) {
+  if (!checkAdminPassword(body.adminPassword)) {
+    return { success: false, error: 'unauthorized' };
+  }
+
+  var packetFilter = norm(body.packetCode);
+
+  var essaySheet = getSheet(SHEET_NAMES.ESSAY_RESPONSES);
+  var essayRows = essaySheet.getDataRange().getValues();
+  var essayByKey = {};
+  for (var i = 1; i < essayRows.length; i++) {
+    var er = essayRows[i];
+    if (!norm(er[1])) continue;
+    var key = normLower(er[1]) + '|' + normLower(er[2]) + '|' + normLower(er[3]);
+    if (!essayByKey[key]) essayByKey[key] = [];
+    essayByKey[key].push({
+      questionId: norm(er[4]),
+      studentAnswer: norm(er[5]),
+      modelAnswer: norm(er[6]),
+      maxPoints: Number(er[7]) || 0,
+      scoreAwarded: er[8] === '' ? null : Number(er[8]),
+      gradingSource: norm(er[9]),
+      feedback: norm(er[10])
+    });
+  }
+
+  var resultsSheet = getSheet(SHEET_NAMES.RESULTS);
+  var resultRows = resultsSheet.getDataRange().getValues();
+  var results = [];
+  for (var i = 1; i < resultRows.length; i++) {
+    var r = resultRows[i];
+    if (!norm(r[1])) continue;
+    var packetCode = norm(r[3]);
+    if (packetFilter && normLower(packetCode) !== normLower(packetFilter)) continue;
+
+    var key = normLower(r[1]) + '|' + normLower(r[2]) + '|' + normLower(packetCode);
+    results.push({
+      timestamp: (r[0] instanceof Date) ? r[0].toISOString() : norm(r[0]),
+      fullName: norm(r[1]),
+      className: norm(r[2]),
+      packetCode: packetCode,
+      objectiveScore: Number(r[4]) || 0,
+      objectiveMax: Number(r[5]) || 0,
+      essaySection: norm(r[6]),
+      essayMax: Number(r[7]) || 0,
+      essayScore: Number(r[8]) || 0,
+      finalScore: Number(r[9]) || 0,
+      timeTakenSeconds: Number(r[10]) || 0,
+      essays: essayByKey[key] || []
+    });
+  }
+  results.sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+
+  var packets = readConfigRows().map(function (c) { return { packetCode: c.packetCode, title: c.title }; });
+
+  return { success: true, results: results, packets: packets };
+}
+
+/** Overwrites one essay question's ScoreAwarded (and marks it as a manual override) from the admin dashboard. */
+function adminUpdateEssayScore(body) {
+  if (!checkAdminPassword(body.adminPassword)) {
+    return { success: false, error: 'unauthorized' };
+  }
+
+  var fullName = norm(body.fullName);
+  var className = norm(body.class);
+  var packetCode = norm(body.packetCode);
+  var questionId = norm(body.questionId);
+  var score = Number(body.score);
+
+  if (!fullName || !className || !packetCode || !questionId || isNaN(score)) {
+    return { success: false, error: 'missing_fields' };
+  }
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var sheet = getSheet(SHEET_NAMES.ESSAY_RESPONSES);
+    var rows = sheet.getDataRange().getValues();
+    for (var i = 1; i < rows.length; i++) {
+      var r = rows[i];
+      if (normLower(r[1]) === normLower(fullName) && normLower(r[2]) === normLower(className) &&
+        normLower(r[3]) === normLower(packetCode) && norm(r[4]) === questionId) {
+        sheet.getRange(i + 1, 9).setValue(score);
+        sheet.getRange(i + 1, 10).setValue('Manual (override)');
+        return { success: true };
+      }
+    }
+    return { success: false, error: 'not_found' };
   } finally {
     lock.releaseLock();
   }

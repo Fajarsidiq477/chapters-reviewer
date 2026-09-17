@@ -115,6 +115,22 @@ How it works:
 
 ---
 
+## Admin dashboard
+
+`admin.html` (published alongside `index.html` at `https://yourusername.github.io/your-repo-name/admin.html`) gives you a browsable table of every submission instead of opening the Sheet directly — filter by packet, search by name/class, sort by any column, expand a row to read a student's written answers next to the model answer and AI feedback, and type in a score to override it on the spot (writes straight back to `EssayResponses`; the `Results` row updates itself since `EssayScore`/`FinalScore` are live formulas).
+
+**One-time setup:**
+1. In the Apps Script editor, click the gear icon (**Project Settings**) in the left sidebar.
+2. Scroll to **Script Properties** → **Add script property**.
+3. Property: `ADMIN_PASSWORD`. Value: a password of your choosing. Save.
+4. Redeploy (**Deploy > Manage deployments** → edit → "New version" → Deploy) so the running script picks up the new `adminResults`/`adminUpdateEssayScore` actions.
+
+That's it — no code, no committing a password anywhere public. Open `admin.html`, enter that password once (it's kept only in `sessionStorage`, so it clears when the browser tab closes — use **Lock** to clear it sooner on a shared computer), and the dashboard loads.
+
+**Note:** the page itself is a public file like any other on GitHub Pages, but it shows no student data until the correct password is entered — the password is checked server-side against Script Properties, never against anything in this repo.
+
+---
+
 ## How grading works
 
 - **Sections 1-2 (multiple choice, true/false)**: exact match, graded instantly on submit.

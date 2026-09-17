@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="wrap">
+
+    <section id="screen-gate" class="card">
+      <h1>Admin Dashboard</h1>
+      <p class="subtitle">Enter the admin password to view student results. This password is set in your Apps Script's Script Properties, not in this page.</p>
+
+      <form id="gate-form">
+        <label for="input-admin-password">Password</label>
+        <input type="password" id="input-admin-password" autocomplete="off" required>
+
+        <div style="margin-top:20px;">
+          <button type="submit" class="btn-primary" id="btn-gate-unlock">Unlock</button>
+        </div>
+        <div id="gate-error" class="error-box" hidden></div>
+      </form>
+    </section>
+
+  </div>
+
+  <section id="screen-dashboard" class="admin-wrap" hidden>
+    <div class="dash-toolbar card">
+      <div class="dash-toolbar-row">
+        <div class="dash-field">
+          <label for="filter-packet">Packet</label>
+          <select id="filter-packet">
+            <option value="">All packets</option>
+          </select>
+        </div>
+        <div class="dash-field dash-field-grow">
+          <label for="filter-search">Search name or class</label>
+          <input type="text" id="filter-search" placeholder="Type to filter...">
+        </div>
+        <div class="dash-toolbar-actions">
+          <button type="button" class="btn-secondary" id="btn-refresh">Refresh</button>
+          <button type="button" class="btn-secondary" id="btn-lock">Lock</button>
+        </div>
+      </div>
+      <div class="dash-summary" id="dash-summary"></div>
+    </div>
+
+    <div class="card table-card">
+      <div class="table-scroll">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th data-sort="fullName">Name</th>
+              <th data-sort="className">Class</th>
+              <th data-sort="packetCode">Packet</th>
+              <th data-sort="objectiveScore">Objective</th>
+              <th data-sort="essayScore">Essay</th>
+              <th data-sort="finalScore">Final</th>
+              <th data-sort="timeTakenSeconds">Time</th>
+              <th data-sort="timestamp">Submitted</th>
+            </tr>
+          </thead>
+          <tbody id="results-tbody"></tbody>
+        </table>
+      </div>
+      <div id="empty-state" class="subtitle" style="padding:16px 4px;" hidden>No results match this filter.</div>
+    </div>
+  </section>
+
+  <script src="js/config.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
