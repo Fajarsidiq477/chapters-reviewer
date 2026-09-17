@@ -1,0 +1,101 @@
+PacketCode,QuestionID,Section,Type,CorrectAnswer,Points,Keywords
+NET4-100,q1,1,mcq,B,1,
+NET4-100,q2,1,mcq,C,1,
+NET4-100,q3,1,mcq,B,1,
+NET4-100,q4,1,mcq,C,1,
+NET4-100,q5,1,mcq,D,1,
+NET4-100,q6,1,mcq,A,1,
+NET4-100,q7,1,mcq,B,1,
+NET4-100,q8,1,mcq,C,1,
+NET4-100,q9,1,mcq,B,1,
+NET4-100,q10,1,mcq,B,1,
+NET4-100,q11,1,mcq,C,1,
+NET4-100,q12,1,mcq,C,1,
+NET4-100,q13,1,mcq,D,1,
+NET4-100,q14,1,mcq,B,1,
+NET4-100,q15,1,mcq,B,1,
+NET4-100,q16,1,mcq,B,1,
+NET4-100,q17,1,mcq,B,1,
+NET4-100,q18,1,mcq,C,1,
+NET4-100,q19,1,mcq,A,1,
+NET4-100,q20,1,mcq,C,1,
+NET4-100,q21,1,mcq,B,1,
+NET4-100,q22,1,mcq,C,1,
+NET4-100,q23,1,mcq,C,1,
+NET4-100,q24,1,mcq,B,1,
+NET4-100,q25,1,mcq,C,1,
+NET4-100,q26,1,mcq,A,1,
+NET4-100,q27,1,mcq,B,1,
+NET4-100,q28,1,mcq,C,1,
+NET4-100,q29,1,mcq,B,1,
+NET4-100,q30,1,mcq,B,1,
+NET4-100,q31,2,truefalse,TRUE,1,
+NET4-100,q32,2,truefalse,FALSE,1,
+NET4-100,q33,2,truefalse,FALSE,1,
+NET4-100,q34,2,truefalse,FALSE,1,
+NET4-100,q35,2,truefalse,TRUE,1,
+NET4-100,q36,2,truefalse,FALSE,1,
+NET4-100,q37,2,truefalse,FALSE,1,
+NET4-100,q38,2,truefalse,FALSE,1,
+NET4-100,q39,2,truefalse,TRUE,1,
+NET4-100,q40,2,truefalse,FALSE,1,
+NET4-100,q41,2,truefalse,FALSE,1,
+NET4-100,q42,2,truefalse,TRUE,1,
+NET4-100,q43,2,truefalse,FALSE,1,
+NET4-100,q44,2,truefalse,TRUE,1,
+NET4-100,q45,2,truefalse,TRUE,1,
+NET4-100,q46,3,fill,Local Area Network,1,
+NET4-100,q47,3,fill,Wide Area Network,1,
+NET4-100,q48,3,fill,Personal Area Network,1,
+NET4-100,q49,3,fill,Media Access Control,1,
+NET4-100,q50,3,fill,MAC,1,
+NET4-100,q51,3,fill,Bridge,1,
+NET4-100,q52,3,fill,"Body (or Payload)",1,
+NET4-100,q53,3,fill,Internet Protocol,1,
+NET4-100,q54,3,fill,Internet,1,
+NET4-100,q55,3,fill,Intranet,1,
+NET4-100,q56,3,fill,Extranet,1,
+NET4-100,q57,3,fill,Encryption,1,
+NET4-100,q58,3,fill,Biometrics,1,
+NET4-100,q59,3,fill,Spyware,1,
+NET4-100,q60,3,fill,Quarantine,1,
+NET4-100,q61,4,short,LAN (Local Area Network),1,
+NET4-100,q62,4,short,WLAN (Wireless Local Area Network),1,
+NET4-100,q63,4,short,Hub,1,
+NET4-100,q64,4,short,Switch,1,
+NET4-100,q65,4,short,Router,1,
+NET4-100,q66,4,short,Intranet,1,
+NET4-100,q67,4,short,Extranet,1,
+NET4-100,q68,4,short,"Cloud storage requires an active internet connection to access files.",1,
+NET4-100,q69,4,short,Passive attack,1,
+NET4-100,q70,4,short,Firewall,1,
+NET4-100,q71,4,short,Bob's Public Key,1,
+NET4-100,q72,4,short,Bob's Private Key,1,
+NET4-100,q73,4,short,"It uses a pet's name, contains a birth year, lacks uppercase letters, and lacks special symbols.",2,
+NET4-100,q74,4,short,Smart card (Contact smart card),1,
+NET4-100,q75,4,short,Physical token (or Electronic token / OTP device),1,
+NET4-100,q76,4,short,Trojan horse,1,
+NET4-100,q77,4,short,Worm,1,
+NET4-100,q78,4,short,Adware,1,
+NET4-100,q79,4,short,Video-conferencing,1,
+NET4-100,q80,4,short,Webinar,1,
+NET4-100,q81,5,essay,"LAN covers a small geographical area (e.g. single building/school), whereas WAN covers a large geographical area (e.g. cities/countries). LAN uses owned cables/WLAN, whereas WAN relies on external infrastructure like undersea cables/satellites.",2,"small area,large area,building,school,cities,countries,owned cables,undersea cables,satellites"
+NET4-100,q82,5,essay,"Wi-Fi has a longer range (up to 100 meters) and fast data transfer speeds. Bluetooth has a short range (up to 10 meters) and slower data transfer speeds.",2,"wifi,100 meters,fast,bluetooth,10 meters,slower"
+NET4-100,q83,5,essay,"Connecting a mobile device (like a smartphone) to another device to share its internet connection.",1,"mobile device,share,internet connection"
+NET4-100,q84,5,essay,"A NIC connects a computer to a network, formatting data into a required format according to protocols so it can be transmitted.",2,"connects,network,formatting data,protocols,transmitted"
+NET4-100,q85,5,essay,"A Switch reads the destination MAC address of incoming data and sends it only to the intended computer, whereas a Hub broadcasts data to all connected computers, causing unnecessary traffic.",2,"mac address,intended computer,hub,broadcasts,unnecessary traffic"
+NET4-100,q86,5,essay,"A Bridge connects separate segments of a single LAN to reduce traffic and prevent unauthorized data transmission across segments.",2,"connects,segments,lan,reduce traffic,unauthorized"
+NET4-100,q87,5,essay,"To transmit data packets between different computer networks (such as connecting a LAN to a WAN/Internet).",1,"transmit,data packets,different networks,lan,wan"
+NET4-100,q88,5,essay,"(1) Header, (2) Body (Payload), and (3) Footer (Trailer).",3,"header,body,payload,footer,trailer"
+NET4-100,q89,5,essay,"The source computer splits a file into data packets with IP addresses. The packets travel across the network taking different routes via routers, and are reassembled in the correct order at the destination.",3,"splits,data packets,ip addresses,different routes,routers,reassembled,destination"
+NET4-100,q90,5,essay,"A MAC address is a unique hardware identification number permanently burned into a NIC. An IP address is a logical address assigned to a device on a network to identify its location.",2,"mac address,hardware,permanently,nic,ip address,logical address,location"
+NET4-100,q91,5,essay,"An Intranet is a private network accessible only by internal members of an organization. An Extranet is an intranet extended to give controlled access to authorized external users (like suppliers or clients).",2,"intranet,private,internal members,extranet,external users,controlled access"
+NET4-100,q92,5,essay,"Advantages: (1) Files accessible from anywhere with internet, (2) Easy file sharing and collaboration. Disadvantages: (1) Requires internet connection, (2) Potential security/hacking risks on remote servers.",4,"accessible anywhere,file sharing,collaboration,requires internet,security risks,hacking"
+NET4-100,q93,5,essay,"A Firewall inspects incoming and outgoing network traffic against a set of rules and blocks/rejects data packets from unauthorized or suspicious IP addresses.",2,"inspects,traffic,rules,blocks,unauthorized,suspicious ip"
+NET4-100,q94,5,essay,"It uses two different keys: a Public Key (available to anyone to encrypt the data) and a secret Private Key (held only by the recipient to decrypt the data).",3,"public key,encrypt,private key,secret,decrypt,recipient"
+NET4-100,q95,5,essay,"(1) At least 8 characters long, (2) Contains a mix of uppercase and lowercase letters, (3) Includes numbers, (4) Includes special symbols (e.g. !, $, #).",4,"8 characters,uppercase,lowercase,numbers,special symbols"
+NET4-100,q96,5,essay,"Biometrics verifies identity by scanning unique physical traits of a person. Example: Fingerprint scanner, face recognition, or iris scanner.",2,"physical traits,scanning,fingerprint,face recognition,iris"
+NET4-100,q97,5,essay,"(1) A Virus needs to attach itself to a host file/program, whereas a Worm is an independent program. (2) A Virus requires human action to spread, whereas a Worm spreads automatically across networks.",2,"attach,host file,independent program,human action,spreads automatically,networks"
+NET4-100,q98,5,essay,"Anti-malware detects, neutralizes, and removes malicious software. Quarantine places suspected infected files into an isolated folder where they cannot run or harm other system files.",3,"detects,neutralizes,removes,quarantine,isolated folder,cannot run"
+NET4-100,q99,5,essay,"Video-conferencing uses specialized high-quality room equipment (large wall screens, room cameras) and dedicated private lines. Web-conferencing uses standard web browsers on personal laptops/smartphones over the public internet.",2,"specialized equipment,room cameras,dedicated lines,web browsers,laptops,public internet"
+NET4-100,q100,5,essay,"A Webcast is a one-way, non-interactive broadcast of audio/video over the internet. A Webinar is an interactive online teaching or presentation session where participants can ask questions and interact.",2,"one-way,non-interactive,broadcast,webinar,interactive,ask questions"

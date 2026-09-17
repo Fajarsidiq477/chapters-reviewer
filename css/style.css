@@ -1,0 +1,191 @@
+:root {
+  --bg: #f4f6f9;
+  --card-bg: #ffffff;
+  --text: #1c2430;
+  --muted: #5b6472;
+  --border: #d9dee5;
+  --accent: #2f6fed;
+  --accent-dark: #1f4fbf;
+  --danger: #d94b4b;
+  --success: #2f9e63;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding-block: 24px;
+  padding-inline: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+h1 { font-size: 1.4rem; margin: 0 0 4px; }
+h2 { font-size: 1.1rem; margin: 0 0 12px; }
+.subtitle { color: var(--muted); margin: 0 0 20px; font-size: 0.95rem; }
+
+label {
+  display: block;
+  font-weight: 600;
+  margin: 14px 0 6px;
+  font-size: 0.9rem;
+}
+
+input[type="text"], textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--text);
+}
+
+textarea { resize: vertical; min-height: 90px; }
+
+button {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 11px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-secondary { background: #eef1f5; color: var(--text); }
+.btn-secondary:hover { background: #e2e6ec; }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.error-box {
+  background: #fdeaea;
+  border: 1px solid #f3c3c3;
+  color: var(--danger);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-top: 14px;
+  font-size: 0.9rem;
+}
+
+.success-box {
+  background: #e9f7ef;
+  border: 1px solid #bfe6cf;
+  color: var(--success);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-top: 14px;
+  font-size: 0.9rem;
+}
+
+.quiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.timer {
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #eef1f5;
+}
+
+.timer.low { background: #fdeaea; color: var(--danger); }
+
+.progress-text { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+
+.question {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.question:last-child { border-bottom: none; }
+
+.question-text { font-weight: 600; margin-bottom: 10px; }
+.marks-hint { color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+
+.options { display: flex; flex-direction: column; gap: 8px; }
+
+.option-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.option-row:hover { background: #f7f9fb; }
+.option-row input { margin-top: 3px; }
+
+.quiz-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.quiz-nav .right-group { display: flex; gap: 10px; margin-left: auto; }
+
+.score-line {
+  font-size: 1.1rem;
+  margin: 6px 0;
+}
+.score-line strong { font-size: 1.4rem; }
+
+[hidden] { display: none !important; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14181f;
+    --card-bg: #1c222c;
+    --text: #e7ebf0;
+    --muted: #97a2b0;
+    --border: #2d3542;
+    --accent: #5b8bf0;
+    --accent-dark: #7ba0f5;
+    --danger: #f08080;
+    --success: #5ecb92;
+  }
+  .btn-secondary { background: #2a313d; color: var(--text); }
+  .btn-secondary:hover { background: #333c4a; }
+  .timer { background: #2a313d; }
+  .timer.low { background: #3a2626; }
+  .option-row:hover { background: #232a35; }
+  .error-box { background: #3a2626; }
+  .success-box { background: #1f3a2c; }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14181f;
+  --card-bg: #1c222c;
+  --text: #e7ebf0;
+  --muted: #97a2b0;
+  --border: #2d3542;
+  --accent: #5b8bf0;
+  --accent-dark: #7ba0f5;
+  --danger: #f08080;
+  --success: #5ecb92;
+}
