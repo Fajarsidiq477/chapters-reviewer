@@ -25,7 +25,7 @@
  * to the client. See gradeEssayWithGemini() and GEMINI_MODEL below.
  */
 
-var GEMINI_MODEL = 'gemini-2.0-flash'; // update if Google renames/retires this free-tier model
+var GEMINI_MODEL = 'gemini-3.6-flash'; // update if Google renames/retires this free-tier model
 
 var SHEET_NAMES = {
   CONFIG: 'Config',
