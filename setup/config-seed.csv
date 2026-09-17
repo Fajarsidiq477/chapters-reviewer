@@ -1,2 +1,2 @@
-PacketCode,PacketTitle,JSONFile,Active,TimeLimitMinutes,GradingMode
-NET4-100,Chapter 4: Networks (100 Questions),chapter4-networks.json,TRUE,45,manual
+PacketCode,PacketTitle,JSONFile,Active,TimeLimitMinutes,GradingMode,QuestionLimit
+NET4-100,Chapter 4: Networks (100 Questions),chapter4-networks.json,TRUE,45,manual,

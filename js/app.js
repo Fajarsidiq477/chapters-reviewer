@@ -220,8 +220,28 @@
       });
   });
 
+  /** Filters the full packet down to the server-assigned question subset, dropping sections left with none. */
+  function applyQuestionLimit(packet, selectedQuestionIds) {
+    if (!selectedQuestionIds || !selectedQuestionIds.length) return packet;
+    var allowed = {};
+    selectedQuestionIds.forEach(function (id) { allowed[id] = true; });
+
+    var filteredSections = packet.sections
+      .map(function (section) {
+        return {
+          id: section.id,
+          title: section.title,
+          type: section.type,
+          questions: section.questions.filter(function (q) { return allowed[q.id]; })
+        };
+      })
+      .filter(function (section) { return section.questions.length > 0; });
+
+    return { packetCode: packet.packetCode, title: packet.title, sections: filteredSections };
+  }
+
   function beginQuiz(packet, meta) {
-    state.packet = packet;
+    state.packet = applyQuestionLimit(packet, meta.selectedQuestionIds);
     var existingDraft = loadDraft(draftKey(state.fullName, state.className, state.packetCode));
 
     if (existingDraft) {

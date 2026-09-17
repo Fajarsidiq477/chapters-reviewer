@@ -4,17 +4,26 @@
  * deployment URL into js/config.js on the GitHub Pages site.
  *
  * Sheet tabs expected (see setupSheets() and /setup/*.csv):
- *   Config          PacketCode | PacketTitle | JSONFile | Active | TimeLimitMinutes | GradingMode
+ *   Config          PacketCode | PacketTitle | JSONFile | Active | TimeLimitMinutes | GradingMode | QuestionLimit
  *   AnswerKeys      PacketCode | QuestionID | Section | Type | CorrectAnswer | Points | Keywords
  *   Results         Timestamp | FullName | Class | PacketCode | ObjectiveScore | ObjectiveMax | EssaySection | EssayMax | EssayScore | FinalScore | TimeTakenSeconds
  *   EssayResponses  Timestamp | FullName | Class | PacketCode | QuestionID | StudentAnswer | ModelAnswer | MaxPoints | ScoreAwarded | AutoEstimated
+ *   ActiveSessions  FullName | Class | PacketCode | SelectedQuestionIds | AssignedAt
+ *
+ * QuestionLimit (Config, optional): if set (>0) and less than the packet's total
+ * question count, each student is randomly assigned that many questions the first
+ * time they validate their code, sampled proportionally across sections so a short
+ * review still touches every question type. The assignment is stored in
+ * ActiveSessions so it stays identical across a resume and is what grading uses
+ * (not whatever the client sends back), regardless of QuestionLimit.
  */
 
 var SHEET_NAMES = {
   CONFIG: 'Config',
   ANSWER_KEYS: 'AnswerKeys',
   RESULTS: 'Results',
-  ESSAY_RESPONSES: 'EssayResponses'
+  ESSAY_RESPONSES: 'EssayResponses',
+  ACTIVE_SESSIONS: 'ActiveSessions'
 };
 
 function doGet(e) {
@@ -68,7 +77,8 @@ function readConfigRows() {
       jsonFile: norm(r[2]),
       active: (r[3] === true) || (normLower(r[3]) === 'true'),
       timeLimitMinutes: Number(r[4]) || 30,
-      gradingMode: normLower(r[5]) === 'auto' ? 'auto' : 'manual'
+      gradingMode: normLower(r[5]) === 'auto' ? 'auto' : 'manual',
+      questionLimit: Number(r[6]) || 0
     });
   }
   return out;
@@ -94,6 +104,80 @@ function hasExistingSubmission(fullName, className, packetCode) {
   return false;
 }
 
+/** Looks up a previously-assigned question subset for this student+packet, if any. Returns an array of ids, or null. */
+function getAssignedQuestionIds(fullName, className, packetCode) {
+  var sheet = getSheet(SHEET_NAMES.ACTIVE_SESSIONS);
+  var rows = sheet.getDataRange().getValues();
+  var fn = normLower(fullName), cl = normLower(className), pc = normLower(packetCode);
+  for (var i = 1; i < rows.length; i++) {
+    var r = rows[i];
+    if (normLower(r[0]) === fn && normLower(r[1]) === cl && normLower(r[2]) === pc) {
+      var ids = norm(r[3]).split(',').map(function (id) { return id.trim(); }).filter(Boolean);
+      return ids.length > 0 ? ids : null;
+    }
+  }
+  return null;
+}
+
+function recordAssignedQuestionIds(fullName, className, packetCode, ids) {
+  var sheet = getSheet(SHEET_NAMES.ACTIVE_SESSIONS);
+  sheet.appendRow([fullName, className, packetCode, ids.join(','), new Date()]);
+}
+
+function shuffle(array) {
+  for (var i = array.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = array[i];
+    array[i] = array[j];
+    array[j] = tmp;
+  }
+  return array;
+}
+
+/**
+ * Randomly samples `limit` question ids out of this packet's AnswerKeys rows,
+ * proportionally across each Section value so short reviews still cover every
+ * question type. Returns null if limit is 0/unset or >= the total question count
+ * (meaning: no limiting needed, use every question).
+ */
+function sampleQuestionIds(packetCode, limit) {
+  var keyRows = readAnswerKeyRows(packetCode);
+  if (!limit || limit <= 0 || limit >= keyRows.length) return null;
+
+  var bySection = {};
+  var sectionOrder = [];
+  keyRows.forEach(function (k) {
+    if (!bySection[k.section]) {
+      bySection[k.section] = [];
+      sectionOrder.push(k.section);
+    }
+    bySection[k.section].push(k.questionId);
+  });
+
+  var total = keyRows.length;
+  var targets = sectionOrder.map(function (section) {
+    var groupSize = bySection[section].length;
+    return { section: section, raw: (limit * groupSize) / total, count: 0 };
+  });
+  targets.forEach(function (t) { t.count = Math.floor(t.raw); });
+
+  var assigned = targets.reduce(function (sum, t) { return sum + t.count; }, 0);
+  var remainder = limit - assigned;
+  targets.sort(function (a, b) { return (b.raw - b.count) - (a.raw - a.count); });
+  for (var i = 0; i < remainder && i < targets.length; i++) {
+    targets[i].count++;
+  }
+
+  var selected = [];
+  targets.forEach(function (t) {
+    var pool = shuffle(bySection[t.section].slice());
+    var take = Math.min(t.count, pool.length);
+    selected = selected.concat(pool.slice(0, take));
+  });
+
+  return selected;
+}
+
 function validateToken(params) {
   var code = norm(params.code);
   var fullName = norm(params.fullName);
@@ -114,13 +198,31 @@ function validateToken(params) {
     return { success: false, error: 'already_submitted' };
   }
 
+  var selectedQuestionIds = null;
+  if (config.questionLimit > 0) {
+    var lock = LockService.getScriptLock();
+    lock.waitLock(30000);
+    try {
+      selectedQuestionIds = getAssignedQuestionIds(fullName, className, config.packetCode);
+      if (!selectedQuestionIds) {
+        selectedQuestionIds = sampleQuestionIds(config.packetCode, config.questionLimit);
+        if (selectedQuestionIds) {
+          recordAssignedQuestionIds(fullName, className, config.packetCode, selectedQuestionIds);
+        }
+      }
+    } finally {
+      lock.releaseLock();
+    }
+  }
+
   return {
     success: true,
     packetCode: config.packetCode,
     title: config.title,
     jsonFile: config.jsonFile,
     timeLimitMinutes: config.timeLimitMinutes,
-    gradingMode: config.gradingMode
+    gradingMode: config.gradingMode,
+    selectedQuestionIds: selectedQuestionIds
   };
 }
 
@@ -197,6 +299,14 @@ function submitQuiz(body) {
     }
 
     var keyRows = readAnswerKeyRows(packetCode);
+    if (config.questionLimit > 0) {
+      var assignedIds = getAssignedQuestionIds(fullName, className, packetCode);
+      if (assignedIds) {
+        var assignedSet = {};
+        assignedIds.forEach(function (id) { assignedSet[id] = true; });
+        keyRows = keyRows.filter(function (k) { return assignedSet[k.questionId]; });
+      }
+    }
     var objectiveScore = 0, objectiveMax = 0;
     var essayMax = 0, hasEssay = false;
     var essayRowsToWrite = [];
@@ -272,10 +382,11 @@ function submitQuiz(body) {
 function setupSheets() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var specs = [
-    { name: SHEET_NAMES.CONFIG, headers: ['PacketCode', 'PacketTitle', 'JSONFile', 'Active', 'TimeLimitMinutes', 'GradingMode'] },
+    { name: SHEET_NAMES.CONFIG, headers: ['PacketCode', 'PacketTitle', 'JSONFile', 'Active', 'TimeLimitMinutes', 'GradingMode', 'QuestionLimit'] },
     { name: SHEET_NAMES.ANSWER_KEYS, headers: ['PacketCode', 'QuestionID', 'Section', 'Type', 'CorrectAnswer', 'Points', 'Keywords'] },
     { name: SHEET_NAMES.RESULTS, headers: ['Timestamp', 'FullName', 'Class', 'PacketCode', 'ObjectiveScore', 'ObjectiveMax', 'EssaySection', 'EssayMax', 'EssayScore', 'FinalScore', 'TimeTakenSeconds'] },
-    { name: SHEET_NAMES.ESSAY_RESPONSES, headers: ['Timestamp', 'FullName', 'Class', 'PacketCode', 'QuestionID', 'StudentAnswer', 'ModelAnswer', 'MaxPoints', 'ScoreAwarded', 'AutoEstimated'] }
+    { name: SHEET_NAMES.ESSAY_RESPONSES, headers: ['Timestamp', 'FullName', 'Class', 'PacketCode', 'QuestionID', 'StudentAnswer', 'ModelAnswer', 'MaxPoints', 'ScoreAwarded', 'AutoEstimated'] },
+    { name: SHEET_NAMES.ACTIVE_SESSIONS, headers: ['FullName', 'Class', 'PacketCode', 'SelectedQuestionIds', 'AssignedAt'] }
   ];
   specs.forEach(function (spec) {
     var sheet = ss.getSheetByName(spec.name);

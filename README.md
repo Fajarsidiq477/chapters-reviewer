@@ -16,7 +16,7 @@ Correct answers are **never** sent to the browser — only the Google Sheet/Apps
 2. Open **Extensions > Apps Script**. This creates a script *bound to this specific spreadsheet* — important, so it automatically finds the right sheet without any ID configuration.
 3. Delete the default `Code.gs` contents and paste in the full contents of this repo's `apps-script/Code.gs`.
 4. In the Apps Script editor toolbar, select the function dropdown, choose **setupSheets**, and click **Run** (▶). The first run will ask you to authorize the script (it's your own script acting on your own sheet — click through the "unverified app" warning, it's expected for personal scripts).
-5. Back in the spreadsheet, you should now see 4 tabs: `Config`, `AnswerKeys`, `Results`, `EssayResponses`, each with a header row.
+5. Back in the spreadsheet, you should now see 5 tabs: `Config`, `AnswerKeys`, `Results`, `EssayResponses`, `ActiveSessions`, each with a header row. (`setupSheets` only creates tabs/headers that don't exist yet, so it's always safe to re-run after updating `Code.gs` — it won't touch data you've already entered.)
 
 ### Import the starter data for Chapter 4
 6. Click the `Config` tab. Go to **File > Import > Upload**, upload `setup/config-seed.csv` from this repo, and choose **"Append to current sheet"** (so it adds the row below your existing header, not a new sheet).
@@ -24,13 +24,14 @@ Correct answers are **never** sent to the browser — only the Google Sheet/Apps
 
 Your `Config` row for chapter 4 looks like this:
 
-| PacketCode | PacketTitle | JSONFile | Active | TimeLimitMinutes | GradingMode |
-|---|---|---|---|---|---|
-| NET4-100 | Chapter 4: Networks (100 Questions) | chapter4-networks.json | TRUE | 45 | manual |
+| PacketCode | PacketTitle | JSONFile | Active | TimeLimitMinutes | GradingMode | QuestionLimit |
+|---|---|---|---|---|---|---|
+| NET4-100 | Chapter 4: Networks (100 Questions) | chapter4-networks.json | TRUE | 45 | manual | (blank) |
 
 - **Active**: `TRUE`/`FALSE` — turn a packet on or off for students at any time, just by editing this cell.
 - **TimeLimitMinutes**: how long a student gets once they start.
 - **GradingMode**: `manual` (default — Section 5 written answers go to `EssayResponses` for you to grade by typing a score) or `auto` (a rough keyword-match estimate is scored automatically). You can change this per packet, any time.
+- **QuestionLimit**: leave blank/`0` to give every student all 100 questions (default). Set a number (e.g. `20`) to give each student a shorter, randomly-sampled subset instead — see "Limiting questions per session" below.
 
 ---
 
@@ -75,6 +76,21 @@ Your `Config` row for chapter 4 looks like this:
 3. Add one `AnswerKeys` row per question for that packet code (same columns: `Type`, `CorrectAnswer`, `Points`, and `Keywords` for essays).
 4. Set `Active` to `TRUE` when you want students to be able to use it. You can have several packets active at once — each has its own code.
 5. Commit and push — GitHub Pages picks up the new JSON file automatically.
+
+---
+
+## Limiting questions per session
+
+By default a student gets every question in the packet. To hand out a shorter review instead:
+
+1. Open the `Config` tab and put a number in that packet's `QuestionLimit` cell — e.g. `20`.
+2. That's it. The next student who enters that packet code gets 20 questions, sampled proportionally across all 5 sections (so a 20-question limit still gives roughly 6 MCQ, 3 True/False, 3 fill-in, 4 scenario, 4 essay, scaled to the section sizes) instead of, say, 20 random MCQs.
+3. Each student's specific subset is decided once (the first time they enter their code) and stays fixed for them — refreshing, resuming, or the timer running out won't reshuffle it, and grading only ever counts the questions that student actually saw (so `ObjectiveMax`/`EssayMax` in `Results` will show smaller totals than the full packet, proportional to `QuestionLimit`). Different students get different random subsets from each other.
+4. To go back to giving everyone all 100 questions, just clear the `QuestionLimit` cell.
+
+Each assignment is recorded in the new `ActiveSessions` tab (`FullName | Class | PacketCode | SelectedQuestionIds | AssignedAt`) — you generally don't need to touch this, it's just how the script remembers who got which subset.
+
+**If you deployed before this feature existed:** add a `QuestionLimit` header to column G of your `Config` tab, and re-run `setupSheets` once from the Apps Script editor to create the `ActiveSessions` tab.
 
 ---
 
