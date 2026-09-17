@@ -13,6 +13,14 @@
       <h1>Chapter Review Quiz</h1>
       <p class="subtitle">Enter your details and the packet code your teacher gave you to begin.</p>
 
+      <div id="resume-banner" class="success-box" hidden style="margin-bottom:16px;">
+        <div id="resume-text"></div>
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn-primary" id="btn-resume">Resume where I left off</button>
+          <button type="button" class="btn-secondary" id="btn-start-fresh">This isn't me / Start fresh</button>
+        </div>
+      </div>
+
       <form id="login-form">
         <label for="input-fullname">Full Name</label>
         <input type="text" id="input-fullname" autocomplete="name" required>

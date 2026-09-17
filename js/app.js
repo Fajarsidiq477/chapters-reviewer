@@ -24,6 +24,13 @@
   var resultBodyEl = document.getElementById('result-body');
   var btnRestart = document.getElementById('btn-restart');
 
+  var resumeBanner = document.getElementById('resume-banner');
+  var resumeText = document.getElementById('resume-text');
+  var btnResume = document.getElementById('btn-resume');
+  var btnStartFresh = document.getElementById('btn-start-fresh');
+
+  var SESSION_POINTER_KEY = 'quiz_active_session';
+
   var state = {
     fullName: '',
     className: '',
@@ -66,13 +73,60 @@
         endTimestamp: state.endTimestamp,
         packetMeta: state.packetMeta
       }));
+      localStorage.setItem(SESSION_POINTER_KEY, JSON.stringify({
+        fullName: state.fullName,
+        className: state.className,
+        packetCode: state.packetCode
+      }));
     } catch (e) { /* ignore storage errors (private mode, quota) */ }
   }
 
   function clearDraft() {
     try {
       localStorage.removeItem(draftKey(state.fullName, state.className, state.packetCode));
+      localStorage.removeItem(SESSION_POINTER_KEY);
     } catch (e) { /* ignore */ }
+  }
+
+  /** On page load, offer to resume the most recent unfinished attempt on this browser. */
+  function checkForResumableSession() {
+    var pointer;
+    try {
+      var raw = localStorage.getItem(SESSION_POINTER_KEY);
+      pointer = raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      pointer = null;
+    }
+    if (!pointer) return;
+
+    var draft = loadDraft(draftKey(pointer.fullName, pointer.className, pointer.packetCode));
+    if (!draft) {
+      localStorage.removeItem(SESSION_POINTER_KEY);
+      return;
+    }
+
+    var packetTitle = (draft.packetMeta && draft.packetMeta.title) || pointer.packetCode;
+    resumeText.textContent = 'We found an unfinished attempt for ' + pointer.fullName + ' (' + pointer.className + ') on "' + packetTitle + '".';
+    resumeBanner.hidden = false;
+
+    document.getElementById('input-fullname').value = pointer.fullName;
+    document.getElementById('input-class').value = pointer.className;
+    document.getElementById('input-token').value = pointer.packetCode;
+
+    btnResume.onclick = function () {
+      loginForm.requestSubmit();
+    };
+
+    btnStartFresh.onclick = function () {
+      try {
+        localStorage.removeItem(draftKey(pointer.fullName, pointer.className, pointer.packetCode));
+        localStorage.removeItem(SESSION_POINTER_KEY);
+      } catch (e) { /* ignore */ }
+      resumeBanner.hidden = true;
+      document.getElementById('input-fullname').value = '';
+      document.getElementById('input-class').value = '';
+      document.getElementById('input-token').value = '';
+    };
   }
 
   function fetchJson(url) {
@@ -372,5 +426,7 @@
   btnRestart.addEventListener('click', function () {
     location.reload();
   });
+
+  checkForResumableSession();
 
 })();
