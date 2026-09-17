@@ -109,7 +109,7 @@ How it works:
 
 **Limitations specific to this mode:**
 - Grading a packet with many essay questions makes one Gemini call per question, so submission can take a while (tens of seconds) for a long packet — consider pairing `ai` mode with `QuestionLimit` to cap how many essay questions each student gets.
-- Free-tier Gemini keys have a per-minute rate limit; if a student's key gets rate-limited partway through, the remaining essays just fall back to "Pending Review" rather than failing the whole submission.
+- Free-tier keys commonly hit a transient `503` ("model is experiencing high demand") or `429` (rate limit) under load. Each essay call retries automatically up to 3 times with a short backoff before giving up, which noticeably helps but doesn't eliminate this - if a question still fails after retries, it falls back to "Pending Review" rather than failing the whole submission.
 - The exact model used is set once in `Code.gs` (`GEMINI_MODEL`, currently `gemini-3.6-flash`) — Google retires model names over time; if grading suddenly starts failing for everyone, this is the first thing to check (the API's error message names the current replacement model directly).
 - The current model "thinks" before answering, which burns extra tokens per call (observed ~70-150 thinking tokens for a one-sentence grading prompt) — on a free-tier key this eats into the per-minute/per-day quota faster than a non-thinking model would, on top of the one-call-per-essay-question cost already mentioned above.
 

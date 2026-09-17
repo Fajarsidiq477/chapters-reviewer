@@ -290,10 +290,28 @@ function keywordScore(student, keywordsStr, maxPoints) {
 
 /**
  * Grades one essay answer using Gemini, called with the student's own API key.
- * Throws on any failure (bad key, quota, unparseable response) - caller must
- * catch and fall back to manual review, never leave the student's submission stuck.
+ * Retries automatically on HTTP 503/429 (Google's own error text says these are
+ * "usually temporary") with short backoff, since free-tier keys hit these under
+ * load fairly often. Fails fast (no retry) on anything else - a bad key or a
+ * malformed response won't be fixed by trying again. Throws after exhausting
+ * retries - caller must catch and fall back to manual review.
  */
 function gradeEssayWithGemini(apiKey, modelAnswer, maxPoints, studentAnswer) {
+  var backoffMs = [0, 1000, 2500];
+  var lastError;
+  for (var attempt = 0; attempt < backoffMs.length; attempt++) {
+    if (backoffMs[attempt]) Utilities.sleep(backoffMs[attempt]);
+    try {
+      return gradeEssayWithGeminiOnce(apiKey, modelAnswer, maxPoints, studentAnswer);
+    } catch (err) {
+      lastError = err;
+      if (!err.retryable) throw err;
+    }
+  }
+  throw lastError;
+}
+
+function gradeEssayWithGeminiOnce(apiKey, modelAnswer, maxPoints, studentAnswer) {
   var prompt = 'You are grading a student\'s short written answer for an ICT (IGCSE-style) class.\n' +
     'Marking guide / model answer: ' + modelAnswer + '\n' +
     'Maximum marks available: ' + maxPoints + '\n' +
@@ -315,7 +333,10 @@ function gradeEssayWithGemini(apiKey, modelAnswer, maxPoints, studentAnswer) {
   });
 
   if (res.getResponseCode() !== 200) {
-    throw new Error('Gemini API HTTP ' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 200));
+    var code = res.getResponseCode();
+    var httpErr = new Error('Gemini API HTTP ' + code + ': ' + res.getContentText().slice(0, 200));
+    httpErr.retryable = (code === 503 || code === 429);
+    throw httpErr;
   }
 
   var data = JSON.parse(res.getContentText());
