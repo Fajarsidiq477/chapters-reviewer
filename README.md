@@ -131,6 +131,28 @@ That's it — no code, no committing a password anywhere public. Open `admin.htm
 
 ---
 
+## Managing question packets from the admin dashboard
+
+The **Packets** tab in `admin.html` lets you create new packets, add/edit their questions, and generate each packet's join code — all from the browser, with no git commit needed for content changes.
+
+**One-time setup (if you deployed before this feature existed):**
+1. In the Apps Script editor, re-run **setupSheets** from the function dropdown — this adds a new `Questions` tab (it won't touch your existing data).
+2. Redeploy: **Deploy > Manage deployments** → edit → "New version" → Deploy, so the running script picks up the new `adminListPackets`/`adminGetPacket`/`adminCreatePacket`/`adminSavePacket` actions.
+
+**How it works:**
+1. Click **+ New Packet**, type a title, and a unique `PacketCode` is generated for you automatically (e.g. `CHAPTER-5-7F3K`) — copy it from the packet editor to share with students once you're done adding questions.
+2. Click **+ Add question** to add one to the flat questions list, then pick its **Type** (Multiple Choice, True/False, Fill in the Blank, Scenario Short Answer, or Essay/Structured) from the dropdown on the card — the fields below it change to match (options + correct answer for MCQ, a TRUE/FALSE choice, an answer + points for fill/short, or a model answer + marks + keywords for essay). You can change a question's type at any time; its answer fields reset to match.
+3. Questions don't need to be grouped or entered in any particular order — add them in whatever order you like, mixing types freely. When a student takes the quiz, they're automatically grouped into pages by type (all MCQs together, then True/False, etc.) purely for pagination; this happens automatically and isn't something you manage.
+4. Packet settings — Title, Active, Time limit, Grading mode, Question limit — are edited on the same screen and saved together with the questions.
+5. New packets are **Active = No** until you're ready — flip it to Yes once the questions are in place.
+6. Editing, retyping, or deleting a question only affects future submissions; it never rewrites past students' `Results`/`EssayResponses` rows, and a question keeps its internal ID across edits (including a type change) so in-progress student attempts aren't broken.
+
+**The original `NET4-100` packet (and any other packet with a `JSONFile` set in the `Config` tab) keeps working exactly as before** — its questions live in `packets/*.json` and are edited by committing to the repo, not from the dashboard. The Packets tab still lets you edit that packet's settings (Active/time limit/grading mode/question limit), but shows a note instead of a question editor for it. Packets created via **+ New Packet** always have their `JSONFile` cell blank and are fully dashboard-managed instead.
+
+**Want Chapter 4 editable from the dashboard too?** Run **migrateChapter4Networks** once from the Apps Script editor's function dropdown. It reads `packets/chapter4-networks.json` (embedded in `Code.gs` as `CHAPTER4_NETWORKS_PACKET`) plus your existing `AnswerKeys` rows, copies all 100 questions into the `Questions` sheet, and clears `NET4-100`'s `JSONFile` cell — after that it behaves exactly like a packet created from **+ New Packet**. Check **View > Logs** in the Apps Script editor after running it for a summary. It's a no-op if you run it twice.
+
+---
+
 ## How grading works
 
 - **Sections 1-2 (multiple choice, true/false)**: exact match, graded instantly on submit.

@@ -28,45 +28,138 @@
   </div>
 
   <section id="screen-dashboard" class="admin-wrap" hidden>
-    <div class="dash-toolbar card">
-      <div class="dash-toolbar-row">
-        <div class="dash-field">
-          <label for="filter-packet">Packet</label>
-          <select id="filter-packet">
-            <option value="">All packets</option>
-          </select>
-        </div>
-        <div class="dash-field dash-field-grow">
-          <label for="filter-search">Search name or class</label>
-          <input type="text" id="filter-search" placeholder="Type to filter...">
-        </div>
-        <div class="dash-toolbar-actions">
-          <button type="button" class="btn-secondary" id="btn-refresh">Refresh</button>
-          <button type="button" class="btn-secondary" id="btn-lock">Lock</button>
-        </div>
-      </div>
-      <div class="dash-summary" id="dash-summary"></div>
+    <div class="admin-nav card">
+      <button type="button" class="nav-tab active" id="nav-tab-results">Results</button>
+      <button type="button" class="nav-tab" id="nav-tab-packets">Packets</button>
+      <button type="button" class="btn-secondary" id="btn-lock" style="margin-left:auto;">Lock</button>
     </div>
 
-    <div class="card table-card">
-      <div class="table-scroll">
-        <table id="results-table">
-          <thead>
-            <tr>
-              <th data-sort="fullName">Name</th>
-              <th data-sort="className">Class</th>
-              <th data-sort="packetCode">Packet</th>
-              <th data-sort="objectiveScore">Objective</th>
-              <th data-sort="essayScore">Essay</th>
-              <th data-sort="finalScore">Final</th>
-              <th data-sort="timeTakenSeconds">Time</th>
-              <th data-sort="timestamp">Submitted</th>
-            </tr>
-          </thead>
-          <tbody id="results-tbody"></tbody>
-        </table>
+    <div id="view-results">
+      <div class="dash-toolbar card">
+        <div class="dash-toolbar-row">
+          <div class="dash-field">
+            <label for="filter-packet">Packet</label>
+            <select id="filter-packet">
+              <option value="">All packets</option>
+            </select>
+          </div>
+          <div class="dash-field dash-field-grow">
+            <label for="filter-search">Search name or class</label>
+            <input type="text" id="filter-search" placeholder="Type to filter...">
+          </div>
+          <div class="dash-toolbar-actions">
+            <button type="button" class="btn-secondary" id="btn-refresh">Refresh</button>
+          </div>
+        </div>
+        <div class="dash-summary" id="dash-summary"></div>
       </div>
-      <div id="empty-state" class="subtitle" style="padding:16px 4px;" hidden>No results match this filter.</div>
+
+      <div class="card table-card">
+        <div class="table-scroll">
+          <table id="results-table">
+            <thead>
+              <tr>
+                <th data-sort="fullName">Name</th>
+                <th data-sort="className">Class</th>
+                <th data-sort="packetCode">Packet</th>
+                <th data-sort="objectiveScore">Objective</th>
+                <th data-sort="essayScore">Essay</th>
+                <th data-sort="finalScore">Final</th>
+                <th data-sort="timeTakenSeconds">Time</th>
+                <th data-sort="timestamp">Submitted</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+        <div id="empty-state" class="subtitle" style="padding:16px 4px;" hidden>No results match this filter.</div>
+      </div>
+    </div>
+
+    <div id="view-packets" hidden>
+      <div id="packets-list-view">
+        <div class="card">
+          <div class="new-packet-row">
+            <input type="text" id="input-new-packet-title" placeholder="New packet title, e.g. Chapter 5: Databases">
+            <button type="button" class="btn-primary" id="btn-new-packet">+ New Packet</button>
+          </div>
+          <div id="new-packet-error" class="error-box" hidden></div>
+        </div>
+
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table id="packets-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Title</th>
+                  <th>Active</th>
+                  <th>Time Limit</th>
+                  <th>Grading</th>
+                  <th>Questions</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="packets-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="packet-editor-view" hidden>
+        <div class="card">
+          <button type="button" class="btn-secondary" id="btn-packet-back">&larr; Back to packets</button>
+          <h2 style="margin-top:16px;">Edit Packet</h2>
+          <div class="packet-code-row">
+            <span class="packet-code-label">Code:</span>
+            <code id="editor-packet-code"></code>
+            <button type="button" class="btn-secondary btn-copy-code" id="btn-copy-code">Copy</button>
+          </div>
+
+          <label for="editor-title">Title</label>
+          <input type="text" id="editor-title">
+
+          <div class="editor-meta-row">
+            <div class="dash-field">
+              <label for="editor-active">Active</label>
+              <select id="editor-active">
+                <option value="true">Yes - students can use this code</option>
+                <option value="false">No - inactive</option>
+              </select>
+            </div>
+            <div class="dash-field">
+              <label for="editor-time-limit">Time limit (minutes)</label>
+              <input type="text" id="editor-time-limit" inputmode="numeric">
+            </div>
+            <div class="dash-field">
+              <label for="editor-grading-mode">Grading mode</label>
+              <select id="editor-grading-mode">
+                <option value="manual">Manual</option>
+                <option value="auto">Auto (keyword)</option>
+                <option value="ai">AI (Gemini)</option>
+              </select>
+            </div>
+            <div class="dash-field">
+              <label for="editor-question-limit">Question limit (blank = all)</label>
+              <input type="text" id="editor-question-limit" inputmode="numeric">
+            </div>
+          </div>
+
+          <div id="editor-static-note" class="subtitle" hidden>This packet's questions are managed in a packets/*.json file in the repo, not here. Only the settings above can be edited from this dashboard.</div>
+          <div id="editor-save-error" class="error-box" hidden></div>
+          <div id="editor-save-flash" class="success-box" hidden></div>
+
+          <div style="margin-top:20px;">
+            <button type="button" class="btn-primary" id="btn-save-packet">Save Packet</button>
+          </div>
+        </div>
+
+        <div class="card" id="editor-questions-card">
+          <h2>Questions</h2>
+          <div id="editor-questions-list"></div>
+          <button type="button" class="btn-secondary btn-add-question" id="btn-add-question">+ Add question</button>
+        </div>
+      </div>
     </div>
   </section>
 

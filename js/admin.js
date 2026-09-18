@@ -20,6 +20,32 @@
   var resultsTbody = document.getElementById('results-tbody');
   var emptyState = document.getElementById('empty-state');
 
+  var navTabResults = document.getElementById('nav-tab-results');
+  var navTabPackets = document.getElementById('nav-tab-packets');
+  var viewResults = document.getElementById('view-results');
+  var viewPackets = document.getElementById('view-packets');
+  var packetsListView = document.getElementById('packets-list-view');
+  var packetEditorView = document.getElementById('packet-editor-view');
+  var packetsTbody = document.getElementById('packets-tbody');
+  var inputNewPacketTitle = document.getElementById('input-new-packet-title');
+  var btnNewPacket = document.getElementById('btn-new-packet');
+  var newPacketError = document.getElementById('new-packet-error');
+  var btnPacketBack = document.getElementById('btn-packet-back');
+  var editorPacketCode = document.getElementById('editor-packet-code');
+  var btnCopyCode = document.getElementById('btn-copy-code');
+  var editorTitle = document.getElementById('editor-title');
+  var editorActive = document.getElementById('editor-active');
+  var editorTimeLimit = document.getElementById('editor-time-limit');
+  var editorGradingMode = document.getElementById('editor-grading-mode');
+  var editorQuestionLimit = document.getElementById('editor-question-limit');
+  var editorStaticNote = document.getElementById('editor-static-note');
+  var editorSaveError = document.getElementById('editor-save-error');
+  var editorSaveFlash = document.getElementById('editor-save-flash');
+  var editorQuestionsCard = document.getElementById('editor-questions-card');
+  var editorQuestionsList = document.getElementById('editor-questions-list');
+  var btnAddQuestion = document.getElementById('btn-add-question');
+  var btnSavePacket = document.getElementById('btn-save-packet');
+
   var state = {
     adminPassword: '',
     results: [],
@@ -27,6 +53,9 @@
     sortKey: 'timestamp',
     sortDir: 'desc'
   };
+
+  var packetsState = { packets: [] };
+  var editorState = null; // { packetCode, isStatic, meta, questions: [{id,type,text,options,correctAnswer,points,keywords}] } - flat list, each question owns its type
 
   function showScreen(name) {
     Object.keys(screens).forEach(function (key) {
@@ -296,6 +325,344 @@
         state.sortDir = 'asc';
       }
       renderTable();
+    });
+  });
+
+  // ---------- Packets management ----------
+
+  function switchNav(name) {
+    navTabResults.classList.toggle('active', name === 'results');
+    navTabPackets.classList.toggle('active', name === 'packets');
+    viewResults.hidden = name !== 'results';
+    viewPackets.hidden = name !== 'packets';
+    if (name === 'packets') {
+      showPacketsList();
+      loadPacketsList();
+    }
+  }
+
+  navTabResults.addEventListener('click', function () { switchNav('results'); });
+  navTabPackets.addEventListener('click', function () { switchNav('packets'); });
+
+  function showPacketsList() {
+    packetsListView.hidden = false;
+    packetEditorView.hidden = true;
+    editorState = null;
+  }
+
+  function showPacketEditor() {
+    packetsListView.hidden = true;
+    packetEditorView.hidden = false;
+  }
+
+  function loadPacketsList() {
+    return postAdmin('adminListPackets', {}).then(function (data) {
+      if (!data.success) throw new Error(data.error || 'unauthorized');
+      packetsState.packets = data.packets;
+      renderPacketsTable();
+    });
+  }
+
+  function renderPacketsTable() {
+    packetsTbody.innerHTML = '';
+    packetsState.packets.forEach(function (p) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><code>' + escapeHtml(p.packetCode) + '</code></td>' +
+        '<td>' + escapeHtml(p.title) + '</td>' +
+        '<td>' + (p.active ? 'Yes' : 'No') + '</td>' +
+        '<td>' + p.timeLimitMinutes + ' min</td>' +
+        '<td>' + escapeHtml(p.gradingMode) + '</td>' +
+        '<td>' + (p.isStatic ? 'Static file' : (p.questionCount + ' questions')) + '</td>' +
+        '<td><button type="button" class="btn-secondary btn-edit-packet">Edit</button></td>';
+      tr.querySelector('.btn-edit-packet').addEventListener('click', function () {
+        openPacketEditor(p.packetCode);
+      });
+      packetsTbody.appendChild(tr);
+    });
+  }
+
+  btnNewPacket.addEventListener('click', function () {
+    var title = inputNewPacketTitle.value.trim();
+    newPacketError.hidden = true;
+    if (!title) {
+      newPacketError.hidden = false;
+      newPacketError.textContent = 'Enter a title for the new packet.';
+      return;
+    }
+    btnNewPacket.disabled = true;
+    postAdmin('adminCreatePacket', { title: title }).then(function (data) {
+      if (!data.success) throw new Error(data.error || 'create_failed');
+      inputNewPacketTitle.value = '';
+      return loadPacketsList().then(function () {
+        openPacketEditor(data.packetCode);
+      });
+    }).catch(function (err) {
+      newPacketError.hidden = false;
+      newPacketError.textContent = 'Could not create packet: ' + err.message;
+    }).finally(function () {
+      btnNewPacket.disabled = false;
+    });
+  });
+
+  btnPacketBack.addEventListener('click', function () {
+    showPacketsList();
+    renderPacketsTable();
+  });
+
+  function openPacketEditor(packetCode) {
+    postAdmin('adminGetPacket', { packetCode: packetCode }).then(function (data) {
+      if (!data.success) throw new Error(data.error || 'not_found');
+      var p = data.packet;
+      editorState = {
+        packetCode: p.packetCode,
+        isStatic: p.isStatic,
+        meta: {
+          title: p.title,
+          active: p.active,
+          timeLimitMinutes: p.timeLimitMinutes,
+          gradingMode: p.gradingMode,
+          questionLimit: p.questionLimit
+        },
+        questions: p.questions || []
+      };
+      renderPacketEditor();
+      showPacketEditor();
+    }).catch(function (err) {
+      alert('Could not load packet: ' + err.message);
+    });
+  }
+
+  function renderPacketEditor() {
+    editorSaveError.hidden = true;
+    editorSaveFlash.hidden = true;
+
+    editorPacketCode.textContent = editorState.packetCode;
+    editorTitle.value = editorState.meta.title;
+    editorActive.value = editorState.meta.active ? 'true' : 'false';
+    editorTimeLimit.value = editorState.meta.timeLimitMinutes;
+    editorGradingMode.value = editorState.meta.gradingMode;
+    editorQuestionLimit.value = editorState.meta.questionLimit || '';
+
+    editorStaticNote.hidden = !editorState.isStatic;
+    editorQuestionsCard.hidden = editorState.isStatic;
+    editorQuestionsList.innerHTML = '';
+
+    if (!editorState.isStatic) {
+      editorState.questions.forEach(function (q, qIdx) {
+        editorQuestionsList.appendChild(buildQuestionCard(q, qIdx));
+      });
+    }
+  }
+
+  btnCopyCode.addEventListener('click', function () {
+    var code = editorState ? editorState.packetCode : '';
+    if (!code) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).catch(function () { /* ignore */ });
+    }
+    btnCopyCode.textContent = 'Copied!';
+    setTimeout(function () { btnCopyCode.textContent = 'Copy'; }, 1500);
+  });
+
+  var TYPE_LABELS = {
+    mcq: 'Multiple Choice',
+    truefalse: 'True / False',
+    fill: 'Fill in the Blank',
+    short: 'Scenario Short Answer',
+    essay: 'Essay / Structured'
+  };
+
+  function makeBlankQuestion(type) {
+    var q = { id: null, type: type, text: '', correctAnswer: '', points: 1, keywords: '' };
+    if (type === 'mcq') q.options = { A: '', B: '', C: '', D: '' };
+    if (type === 'truefalse') q.correctAnswer = 'TRUE';
+    return q;
+  }
+
+  btnAddQuestion.addEventListener('click', function () {
+    if (!editorState) return;
+    editorState.questions.push(makeBlankQuestion('mcq'));
+    renderPacketEditor();
+  });
+
+  function buildQuestionCard(q, qIdx) {
+    var card = document.createElement('div');
+    card.className = 'question-card';
+
+    var headRow = document.createElement('div');
+    headRow.className = 'question-card-head';
+
+    var typeSelect = document.createElement('select');
+    typeSelect.className = 'question-type-select';
+    Object.keys(TYPE_LABELS).forEach(function (type) {
+      var opt = document.createElement('option');
+      opt.value = type;
+      opt.textContent = TYPE_LABELS[type];
+      if (q.type === type) opt.selected = true;
+      typeSelect.appendChild(opt);
+    });
+    typeSelect.addEventListener('change', function (e) {
+      var newType = e.target.value;
+      if (newType === 'mcq' && !q.options) q.options = { A: '', B: '', C: '', D: '' };
+      if (newType === 'truefalse' && ['TRUE', 'FALSE'].indexOf(q.correctAnswer) === -1) q.correctAnswer = 'TRUE';
+      q.type = newType;
+      renderPacketEditor();
+    });
+    headRow.appendChild(typeSelect);
+
+    var delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn-delete-question';
+    delBtn.textContent = 'Delete';
+    delBtn.addEventListener('click', function () {
+      editorState.questions.splice(qIdx, 1);
+      renderPacketEditor();
+    });
+    headRow.appendChild(delBtn);
+    card.appendChild(headRow);
+
+    var textArea = document.createElement('textarea');
+    textArea.rows = 2;
+    textArea.placeholder = 'Question text';
+    textArea.value = q.text;
+    textArea.addEventListener('input', function (e) { q.text = e.target.value; });
+    card.appendChild(textArea);
+
+    if (q.type === 'mcq') {
+      if (!q.options) q.options = { A: '', B: '', C: '', D: '' };
+      var mcqGroupName = 'mcq-correct-' + qIdx;
+      ['A', 'B', 'C', 'D', 'E', 'F'].forEach(function (letter) {
+        if (!(letter in q.options)) return;
+        card.appendChild(buildMcqOptionRow(q, letter, mcqGroupName));
+      });
+      var addOptBtn = document.createElement('button');
+      addOptBtn.type = 'button';
+      addOptBtn.className = 'btn-secondary';
+      var nextLetter = ['A', 'B', 'C', 'D', 'E', 'F'].filter(function (l) { return !(l in q.options); })[0];
+      if (nextLetter) {
+        addOptBtn.textContent = '+ Option ' + nextLetter;
+        addOptBtn.addEventListener('click', function () {
+          q.options[nextLetter] = '';
+          renderPacketEditor();
+        });
+        card.appendChild(addOptBtn);
+      }
+    } else if (q.type === 'truefalse') {
+      var tfRow = document.createElement('div');
+      tfRow.className = 'question-field-row';
+      ['TRUE', 'FALSE'].forEach(function (val) {
+        var label = document.createElement('label');
+        label.style.margin = '0';
+        var radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'tf-' + qIdx;
+        radio.checked = q.correctAnswer === val;
+        radio.addEventListener('change', function () { q.correctAnswer = val; });
+        label.appendChild(radio);
+        label.appendChild(document.createTextNode(' ' + val));
+        tfRow.appendChild(label);
+      });
+      card.appendChild(tfRow);
+    } else if (q.type === 'fill' || q.type === 'short') {
+      var row = document.createElement('div');
+      row.className = 'question-field-row';
+      row.innerHTML = '<label>Correct answer:</label><input type="text">' +
+        '<label>Points:</label><input type="text" class="points-input" inputmode="numeric">';
+      var inputs = row.querySelectorAll('input');
+      inputs[0].value = q.correctAnswer;
+      inputs[0].addEventListener('input', function (e) { q.correctAnswer = e.target.value; });
+      inputs[1].value = q.points;
+      inputs[1].addEventListener('input', function (e) { q.points = e.target.value; });
+      card.appendChild(row);
+    } else if (q.type === 'essay') {
+      var modelLabel = document.createElement('label');
+      modelLabel.textContent = 'Model answer / marking guide';
+      card.appendChild(modelLabel);
+      var modelArea = document.createElement('textarea');
+      modelArea.rows = 2;
+      modelArea.value = q.correctAnswer;
+      modelArea.addEventListener('input', function (e) { q.correctAnswer = e.target.value; });
+      card.appendChild(modelArea);
+
+      var essayRow = document.createElement('div');
+      essayRow.className = 'question-field-row';
+      essayRow.innerHTML = '<label>Marks:</label><input type="text" class="points-input" inputmode="numeric">' +
+        '<label>Keywords (comma-separated, for Auto grading):</label><input type="text">';
+      var essayInputs = essayRow.querySelectorAll('input');
+      essayInputs[0].value = q.points;
+      essayInputs[0].addEventListener('input', function (e) { q.points = e.target.value; });
+      essayInputs[1].value = q.keywords;
+      essayInputs[1].addEventListener('input', function (e) { q.keywords = e.target.value; });
+      card.appendChild(essayRow);
+    }
+
+    return card;
+  }
+
+  function buildMcqOptionRow(q, letter, groupName) {
+    var row = document.createElement('div');
+    row.className = 'option-edit-row';
+    var radio = document.createElement('input');
+    radio.type = 'radio';
+    radio.name = groupName;
+    radio.checked = (q.correctAnswer || '').toUpperCase() === letter;
+    radio.title = 'Mark ' + letter + ' as the correct answer';
+    radio.addEventListener('change', function () { q.correctAnswer = letter; });
+
+    var label = document.createElement('span');
+    label.className = 'option-letter';
+    label.textContent = letter;
+
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Option ' + letter + ' text';
+    input.value = q.options[letter];
+    input.addEventListener('input', function (e) { q.options[letter] = e.target.value; });
+
+    row.appendChild(radio);
+    row.appendChild(label);
+    row.appendChild(input);
+    return row;
+  }
+
+  btnSavePacket.addEventListener('click', function () {
+    if (!editorState) return;
+    editorSaveError.hidden = true;
+    editorSaveFlash.hidden = true;
+
+    var meta = {
+      title: editorTitle.value.trim(),
+      active: editorActive.value === 'true',
+      timeLimitMinutes: Number(editorTimeLimit.value) || 30,
+      gradingMode: editorGradingMode.value,
+      questionLimit: Number(editorQuestionLimit.value) || 0
+    };
+    if (!meta.title) {
+      editorSaveError.hidden = false;
+      editorSaveError.textContent = 'Title is required.';
+      return;
+    }
+
+    var payload = { packetCode: editorState.packetCode, meta: meta };
+    if (!editorState.isStatic) {
+      payload.questions = editorState.questions;
+    }
+
+    btnSavePacket.disabled = true;
+    btnSavePacket.textContent = 'Saving...';
+    postAdmin('adminSavePacket', payload).then(function (data) {
+      if (!data.success) throw new Error(data.error || 'save_failed');
+      return loadPacketsList().then(function () { return openPacketEditor(editorState.packetCode); }).then(function () {
+        editorSaveFlash.hidden = false;
+        editorSaveFlash.textContent = 'Saved.';
+      });
+    }).catch(function (err) {
+      editorSaveError.hidden = false;
+      editorSaveError.textContent = 'Could not save: ' + err.message;
+    }).finally(function () {
+      btnSavePacket.disabled = false;
+      btnSavePacket.textContent = 'Save Packet';
     });
   });
 

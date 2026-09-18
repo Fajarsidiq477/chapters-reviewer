@@ -148,6 +148,17 @@
     return fetch(url).then(function (res) { return res.json(); });
   }
 
+  /** Loads a packet's questions: static packets fetch their packets/*.json file, dashboard-managed ones fetch it live from the Apps Script. */
+  function loadPacket(data) {
+    if (data.jsonFile) {
+      return fetchJson('packets/' + data.jsonFile);
+    }
+    return fetchJson(APPS_SCRIPT_URL + '?action=packet&code=' + encodeURIComponent(data.packetCode)).then(function (res) {
+      if (!res.success) throw new Error(res.error || 'packet_load_failed');
+      return { packetCode: res.packetCode, title: res.title, sections: res.sections };
+    });
+  }
+
   function postJson(url, payload) {
     return fetch(url, {
       method: 'POST',
@@ -223,7 +234,7 @@
           return;
         }
 
-        return fetchJson('packets/' + data.jsonFile).then(function (packet) {
+        return loadPacket(data).then(function (packet) {
           beginQuiz(packet, data);
         });
       })
@@ -255,7 +266,7 @@
     btnApikeyContinue.disabled = true;
     btnApikeyContinue.textContent = 'Loading...';
 
-    fetchJson('packets/' + data.jsonFile)
+    loadPacket(data)
       .then(function (packet) {
         beginQuiz(packet, data);
       })
